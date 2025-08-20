@@ -3,7 +3,7 @@
  * This file defines the contract for configuration management
  */
 
-import type { TaskPriority, TaskComplexity } from '../types/index';
+import type { TaskComplexity, TaskPriority } from '../types/index';
 
 /**
  * Model configuration for different AI roles

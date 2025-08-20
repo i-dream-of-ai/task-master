@@ -1,22 +1,21 @@
 /**
- * Jest setup file for tm-core package
- * This file is executed before running tests and can be used to configure
- * testing utilities, global mocks, and test environment setup.
+ * @fileoverview Vitest test setup file
  */
 
-// Configure test environment
-process.env.NODE_ENV = 'test';
+import { afterAll, beforeAll, vi } from 'vitest';
 
-// Global test utilities can be added here
-// Custom matchers and global types can be defined here in the future
+// Setup any global test configuration here
+// For example, increase timeout for slow CI environments
+if (process.env.CI) {
+	// Vitest timeout is configured in vitest.config.ts
+}
 
-// Set up any global mocks or configurations here
-beforeEach(() => {
-	// Reset any global state before each test
-	jest.clearAllMocks();
+// Suppress console errors during tests unless explicitly testing them
+const originalError = console.error;
+beforeAll(() => {
+	console.error = vi.fn();
 });
 
-afterEach(() => {
-	// Clean up after each test
-	jest.restoreAllMocks();
+afterAll(() => {
+	console.error = originalError;
 });

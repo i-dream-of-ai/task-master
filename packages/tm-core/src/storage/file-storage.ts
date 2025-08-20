@@ -2,8 +2,8 @@
  * File-based storage implementation for Task Master
  */
 
-import { promises as fs } from 'fs';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import type { Task, TaskMetadata } from '../types/index.js';
 import { BaseStorage, type StorageStats } from './storage.interface.js';
 
@@ -228,9 +228,7 @@ export class FileStorage extends BaseStorage {
 	/**
 	 * Read and parse JSON file with error handling
 	 */
-	private async readJsonFile(
-		filePath: string
-	): Promise<FileStorageData | null> {
+	private async readJsonFile(filePath: string): Promise<FileStorageData | null> {
 		try {
 			const content = await fs.readFile(filePath, 'utf-8');
 			return JSON.parse(content);
@@ -248,10 +246,7 @@ export class FileStorage extends BaseStorage {
 	/**
 	 * Write JSON file with atomic operation using temp file
 	 */
-	private async writeJsonFile(
-		filePath: string,
-		data: FileStorageData
-	): Promise<void> {
+	private async writeJsonFile(filePath: string, data: FileStorageData): Promise<void> {
 		// Use file locking to prevent concurrent writes
 		const lockKey = filePath;
 		const existingLock = this.fileLocks.get(lockKey);
@@ -273,10 +268,7 @@ export class FileStorage extends BaseStorage {
 	/**
 	 * Perform the actual write operation
 	 */
-	private async performWrite(
-		filePath: string,
-		data: FileStorageData
-	): Promise<void> {
+	private async performWrite(filePath: string, data: FileStorageData): Promise<void> {
 		const tempPath = `${filePath}.tmp`;
 
 		try {
@@ -331,9 +323,7 @@ export class FileStorage extends BaseStorage {
 		try {
 			const files = await fs.readdir(dir);
 			const backupFiles = files
-				.filter(
-					(f) => f.startsWith(`${basename}.backup.`) && f.endsWith('.json')
-				)
+				.filter((f) => f.startsWith(`${basename}.backup.`) && f.endsWith('.json'))
 				.sort()
 				.reverse();
 

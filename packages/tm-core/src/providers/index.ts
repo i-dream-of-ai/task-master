@@ -1,27 +1,19 @@
 /**
- * @fileoverview AI provider implementations for the tm-core package
- * This file exports all AI provider classes and interfaces
+ * @fileoverview Barrel export for provider modules
  */
 
-// Provider interfaces and implementations
-export * from './base-provider.js';
-// export * from './anthropic-provider.js';
-// export * from './openai-provider.js';
-// export * from './perplexity-provider.js';
+// Export AI providers from subdirectory
+export { BaseProvider } from './ai/base-provider.js';
+export type {
+	BaseProviderConfig,
+	CompletionResult
+} from './ai/base-provider.js';
 
-// Placeholder exports - these will be implemented in later tasks
-export interface AIProvider {
-	name: string;
-	generateResponse(prompt: string): Promise<string>;
-}
+// Export all from AI module
+export * from './ai/index.js';
 
-/**
- * @deprecated This is a placeholder class that will be properly implemented in later tasks
- */
-export class PlaceholderProvider implements AIProvider {
-	name = 'placeholder';
+// Storage providers will be exported here when implemented
+// export * from './storage/index.js';
 
-	async generateResponse(prompt: string): Promise<string> {
-		return `Placeholder response for: ${prompt}`;
-	}
-}
+// Placeholder provider for tests
+export { PlaceholderProvider } from './placeholder-provider.js';

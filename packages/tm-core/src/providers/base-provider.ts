@@ -3,11 +3,11 @@
  * Provides common functionality and properties for all AI provider implementations
  */
 
-import {
-	IAIProvider,
+import type {
+	AIModel,
 	AIOptions,
 	AIResponse,
-	AIModel,
+	IAIProvider,
 	ProviderInfo,
 	ProviderUsageStats
 } from '../interfaces/ai-provider.interface.js';
@@ -32,9 +32,9 @@ export abstract class BaseProvider implements IAIProvider {
 	/** Current model being used */
 	protected model: string;
 	/** Maximum number of retry attempts */
-	protected maxRetries: number = 3;
+	protected maxRetries = 3;
 	/** Delay between retries in milliseconds */
-	protected retryDelay: number = 1000;
+	protected retryDelay = 1000;
 
 	/**
 	 * Constructor for BaseProvider
@@ -54,10 +54,7 @@ export abstract class BaseProvider implements IAIProvider {
 	}
 
 	// Abstract methods that concrete providers must implement
-	abstract generateCompletion(
-		prompt: string,
-		options?: AIOptions
-	): Promise<AIResponse>;
+	abstract generateCompletion(prompt: string, options?: AIOptions): Promise<AIResponse>;
 	abstract generateStreamingCompletion(
 		prompt: string,
 		options?: AIOptions

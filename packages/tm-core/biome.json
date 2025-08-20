@@ -1,0 +1,98 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true,
+		"defaultBranch": "main"
+	},
+	"files": {
+		"include": ["src/**/*.ts", "tests/**/*.ts", "*.ts", "*.js", "*.json"],
+		"ignore": ["**/node_modules", "**/dist", "**/.git", "**/coverage", "**/*.d.ts"]
+	},
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": false,
+		"indentStyle": "tab",
+		"indentWidth": 2,
+		"lineEnding": "lf",
+		"lineWidth": 100,
+		"attributePosition": "auto"
+	},
+	"organizeImports": {
+		"enabled": true
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"style": {
+				"noNonNullAssertion": "off",
+				"useConst": "error",
+				"useImportType": "warn",
+				"useTemplate": "warn",
+				"noUselessElse": "warn",
+				"noVar": "error"
+			},
+			"correctness": {
+				"noUnusedVariables": "warn",
+				"noUnusedImports": "error",
+				"useExhaustiveDependencies": "warn"
+			},
+			"complexity": {
+				"noBannedTypes": "error",
+				"noForEach": "off",
+				"noStaticOnlyClass": "warn",
+				"noUselessConstructor": "error",
+				"noUselessTypeConstraint": "error",
+				"useArrowFunction": "off"
+			},
+			"suspicious": {
+				"noExplicitAny": "warn",
+				"noImplicitAnyLet": "error",
+				"noArrayIndexKey": "warn",
+				"noAsyncPromiseExecutor": "error",
+				"noDoubleEquals": "warn",
+				"noRedundantUseStrict": "error"
+			},
+			"security": {
+				"noGlobalEval": "error"
+			},
+			"performance": {
+				"noAccumulatingSpread": "warn",
+				"noDelete": "warn"
+			},
+			"a11y": {
+				"recommended": false
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"enabled": true,
+			"quoteStyle": "single",
+			"jsxQuoteStyle": "double",
+			"quoteProperties": "asNeeded",
+			"trailingCommas": "none",
+			"semicolons": "always",
+			"arrowParentheses": "always",
+			"bracketSpacing": true,
+			"bracketSameLine": false
+		},
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
+		}
+	},
+	"json": {
+		"formatter": {
+			"enabled": true,
+			"indentStyle": "tab",
+			"lineWidth": 100,
+			"trailingCommas": "none"
+		},
+		"parser": {
+			"allowComments": true,
+			"allowTrailingCommas": false
+		}
+	}
+}

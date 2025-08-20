@@ -3,26 +3,21 @@
  */
 
 import {
-	generateTaskId,
-	isValidTaskId,
-	formatDate,
+	PlaceholderParser,
 	PlaceholderProvider,
 	PlaceholderStorage,
-	PlaceholderParser,
-	TmCoreError,
-	TaskNotFoundError,
-	ValidationError,
 	StorageError,
-	version,
-	name
+	TaskNotFoundError,
+	TmCoreError,
+	ValidationError,
+	formatDate,
+	generateTaskId,
+	isValidTaskId,
+	name,
+	version
 } from '@/index';
 
-import type {
-	TaskId,
-	TaskStatus,
-	TaskPriority,
-	PlaceholderTask
-} from '@/types/index';
+import type { PlaceholderTask, TaskId, TaskPriority, TaskStatus } from '@/types/index';
 
 describe('tm-core smoke tests', () => {
 	describe('package metadata', () => {

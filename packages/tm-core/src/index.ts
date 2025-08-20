@@ -3,6 +3,14 @@
  * This file exports all public APIs from the core Task Master library
  */
 
+// Export main facade
+export {
+	TaskMasterCore,
+	createTaskMasterCore,
+	type TaskMasterCoreOptions,
+	type ListTasksResult
+} from './task-master-core.js';
+
 // Re-export types
 export type * from './types/index';
 
@@ -24,6 +32,9 @@ export * from './utils/index';
 
 // Re-export errors
 export * from './errors/index';
+
+// Re-export entities
+export { TaskEntity } from './core/entities/task.entity.js';
 
 // Package metadata
 export const version = '1.0.0';

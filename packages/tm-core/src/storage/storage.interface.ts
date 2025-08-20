@@ -2,12 +2,7 @@
  * Storage interface and base implementation for Task Master
  */
 
-import type {
-	Task,
-	TaskMetadata,
-	TaskFilter,
-	TaskSortOptions
-} from '../types/index.js';
+import type { Task, TaskFilter, TaskMetadata, TaskSortOptions } from '../types/index.js';
 
 /**
  * Storage statistics
@@ -38,11 +33,7 @@ export interface IStorage {
 	loadTasks(tag?: string): Promise<Task[]>;
 	saveTasks(tasks: Task[], tag?: string): Promise<void>;
 	appendTasks(tasks: Task[], tag?: string): Promise<void>;
-	updateTask(
-		taskId: string,
-		updates: Partial<Task>,
-		tag?: string
-	): Promise<boolean>;
+	updateTask(taskId: string, updates: Partial<Task>, tag?: string): Promise<boolean>;
 	deleteTask(taskId: string, tag?: string): Promise<boolean>;
 	exists(tag?: string): Promise<boolean>;
 
@@ -100,11 +91,7 @@ export abstract class BaseStorage implements IStorage {
 		await this.saveTasks(mergedTasks, tag);
 	}
 
-	async updateTask(
-		taskId: string,
-		updates: Partial<Task>,
-		tag?: string
-	): Promise<boolean> {
+	async updateTask(taskId: string, updates: Partial<Task>, tag?: string): Promise<boolean> {
 		const tasks = await this.loadTasks(tag);
 		const taskIndex = tasks.findIndex((t) => t.id === taskId);
 
@@ -149,7 +136,7 @@ export abstract class BaseStorage implements IStorage {
 		};
 	}
 
-	async saveMetadata(metadata: TaskMetadata, tag?: string): Promise<void> {
+	async saveMetadata(_metadata: TaskMetadata, _tag?: string): Promise<void> {
 		// Default implementation: metadata is derived from tasks
 		// Subclasses can override if they store metadata separately
 	}
@@ -189,26 +176,19 @@ export abstract class BaseStorage implements IStorage {
 		return tasks.filter((task) => {
 			// Status filter
 			if (filter.status) {
-				const statuses = Array.isArray(filter.status)
-					? filter.status
-					: [filter.status];
+				const statuses = Array.isArray(filter.status) ? filter.status : [filter.status];
 				if (!statuses.includes(task.status)) return false;
 			}
 
 			// Priority filter
 			if (filter.priority) {
-				const priorities = Array.isArray(filter.priority)
-					? filter.priority
-					: [filter.priority];
+				const priorities = Array.isArray(filter.priority) ? filter.priority : [filter.priority];
 				if (!priorities.includes(task.priority)) return false;
 			}
 
 			// Tags filter
 			if (filter.tags && filter.tags.length > 0) {
-				if (
-					!task.tags ||
-					!filter.tags.some((tag) => task.tags?.includes(tag))
-				) {
+				if (!task.tags || !filter.tags.some((tag) => task.tags?.includes(tag))) {
 					return false;
 				}
 			}
@@ -223,9 +203,7 @@ export abstract class BaseStorage implements IStorage {
 			if (filter.search) {
 				const searchLower = filter.search.toLowerCase();
 				const inTitle = task.title.toLowerCase().includes(searchLower);
-				const inDescription = task.description
-					.toLowerCase()
-					.includes(searchLower);
+				const inDescription = task.description.toLowerCase().includes(searchLower);
 				const inDetails = task.details.toLowerCase().includes(searchLower);
 				if (!inTitle && !inDescription && !inDetails) return false;
 			}
@@ -240,8 +218,7 @@ export abstract class BaseStorage implements IStorage {
 				const complexities = Array.isArray(filter.complexity)
 					? filter.complexity
 					: [filter.complexity];
-				if (!task.complexity || !complexities.includes(task.complexity))
-					return false;
+				if (!task.complexity || !complexities.includes(task.complexity)) return false;
 			}
 
 			return true;

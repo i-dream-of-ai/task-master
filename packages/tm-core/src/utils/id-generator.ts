@@ -3,7 +3,7 @@
  * Provides functions to generate unique identifiers for tasks and subtasks
  */
 
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 
 /**
  * Generates a unique task ID using the format: TASK-{timestamp}-{random}
@@ -33,28 +33,22 @@ export function generateTaskId(): string {
  * // Returns: "TASK-123-A7B3.2"
  * ```
  */
-export function generateSubtaskId(
-	parentId: string,
-	existingSubtasks: string[] = []
-): string {
+export function generateSubtaskId(parentId: string, existingSubtasks: string[] = []): string {
 	// Find existing subtasks for this parent
-	const parentSubtasks = existingSubtasks.filter((id) =>
-		id.startsWith(`${parentId}.`)
-	);
+	const parentSubtasks = existingSubtasks.filter((id) => id.startsWith(`${parentId}.`));
 
 	// Extract sequential numbers and find the highest
 	const sequentialNumbers = parentSubtasks
 		.map((id) => {
 			const parts = id.split('.');
 			const lastPart = parts[parts.length - 1];
-			return parseInt(lastPart, 10);
+			return Number.parseInt(lastPart, 10);
 		})
-		.filter((num) => !isNaN(num))
+		.filter((num) => !Number.isNaN(num))
 		.sort((a, b) => a - b);
 
 	// Determine the next sequential number
-	const nextSequential =
-		sequentialNumbers.length > 0 ? Math.max(...sequentialNumbers) + 1 : 1;
+	const nextSequential = sequentialNumbers.length > 0 ? Math.max(...sequentialNumbers) + 1 : 1;
 
 	return `${parentId}.${nextSequential}`;
 }
@@ -118,8 +112,8 @@ export function isValidSubtaskId(id: string): boolean {
 	// Remaining parts should be positive integers
 	const sequentialParts = parts.slice(1);
 	return sequentialParts.every((part) => {
-		const num = parseInt(part, 10);
-		return !isNaN(num) && num > 0 && part === num.toString();
+		const num = Number.parseInt(part, 10);
+		return !Number.isNaN(num) && num > 0 && part === num.toString();
 	});
 }
 
