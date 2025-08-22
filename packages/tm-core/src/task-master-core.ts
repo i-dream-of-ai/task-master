@@ -3,7 +3,11 @@
  */
 
 import { ConfigManager } from './config/config-manager.js';
-import { TaskService, type TaskListResult as ListTasksResult, type GetTaskListOptions } from './services/task-service.js';
+import {
+	TaskService,
+	type TaskListResult as ListTasksResult,
+	type GetTaskListOptions
+} from './services/task-service.js';
 import { ERROR_CODES, TaskMasterError } from './errors/task-master-error.js';
 import type { IConfiguration } from './interfaces/configuration.interface.js';
 import type { Task, TaskStatus, TaskFilter } from './types/index.js';
@@ -33,7 +37,10 @@ export class TaskMasterCore {
 
 	constructor(options: TaskMasterCoreOptions) {
 		if (!options.projectPath) {
-			throw new TaskMasterError('Project path is required', ERROR_CODES.MISSING_CONFIGURATION);
+			throw new TaskMasterError(
+				'Project path is required',
+				ERROR_CODES.MISSING_CONFIGURATION
+			);
 		}
 
 		// Create config manager
@@ -108,7 +115,10 @@ export class TaskMasterCore {
 	/**
 	 * Get tasks by status
 	 */
-	async getTasksByStatus(status: TaskStatus | TaskStatus[], tag?: string): Promise<Task[]> {
+	async getTasksByStatus(
+		status: TaskStatus | TaskStatus[],
+		tag?: string
+	): Promise<Task[]> {
 		await this.ensureInitialized();
 		return this.taskService.getTasksByStatus(status, tag);
 	}

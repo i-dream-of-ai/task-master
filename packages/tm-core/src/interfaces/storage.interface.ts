@@ -40,7 +40,11 @@ export interface IStorage {
 	 * @param tag - Optional tag context for the task
 	 * @returns Promise that resolves when update is complete
 	 */
-	updateTask(taskId: string, updates: Partial<Task>, tag?: string): Promise<void>;
+	updateTask(
+		taskId: string,
+		updates: Partial<Task>,
+		tag?: string
+	): Promise<void>;
 
 	/**
 	 * Delete a task by ID
@@ -173,7 +177,11 @@ export abstract class BaseStorage implements IStorage {
 	abstract loadTasks(tag?: string): Promise<Task[]>;
 	abstract saveTasks(tasks: Task[], tag?: string): Promise<void>;
 	abstract appendTasks(tasks: Task[], tag?: string): Promise<void>;
-	abstract updateTask(taskId: string, updates: Partial<Task>, tag?: string): Promise<void>;
+	abstract updateTask(
+		taskId: string,
+		updates: Partial<Task>,
+		tag?: string
+	): Promise<void>;
 	abstract deleteTask(taskId: string, tag?: string): Promise<void>;
 	abstract exists(tag?: string): Promise<boolean>;
 	abstract loadMetadata(tag?: string): Promise<TaskMetadata | null>;

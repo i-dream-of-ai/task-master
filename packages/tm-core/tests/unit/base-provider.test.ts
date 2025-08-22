@@ -3,7 +3,10 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ERROR_CODES, TaskMasterError } from '../../src/errors/task-master-error';
+import {
+	ERROR_CODES,
+	TaskMasterError
+} from '../../src/errors/task-master-error';
 import { MockProvider } from '../mocks/mock-provider';
 
 describe('BaseProvider', () => {
@@ -64,21 +67,21 @@ describe('BaseProvider', () => {
 		});
 
 		it('should validate temperature range', async () => {
-			await expect(provider.generateCompletion('Test', { temperature: 3 })).rejects.toThrow(
-				'Temperature must be between 0 and 2'
-			);
+			await expect(
+				provider.generateCompletion('Test', { temperature: 3 })
+			).rejects.toThrow('Temperature must be between 0 and 2');
 		});
 
 		it('should validate maxTokens range', async () => {
-			await expect(provider.generateCompletion('Test', { maxTokens: 0 })).rejects.toThrow(
-				'Max tokens must be between 1 and 100000'
-			);
+			await expect(
+				provider.generateCompletion('Test', { maxTokens: 0 })
+			).rejects.toThrow('Max tokens must be between 1 and 100000');
 		});
 
 		it('should validate topP range', async () => {
-			await expect(provider.generateCompletion('Test', { topP: 1.5 })).rejects.toThrow(
-				'Top-p must be between 0 and 1'
-			);
+			await expect(
+				provider.generateCompletion('Test', { topP: 1.5 })
+			).rejects.toThrow('Top-p must be between 0 and 1');
 		});
 	});
 
@@ -125,7 +128,9 @@ describe('BaseProvider', () => {
 			const provider = new MockProvider({ apiKey: 'test-key' });
 
 			// Access protected method through type assertion
-			const calculateDelay = (provider as any).calculateBackoffDelay.bind(provider);
+			const calculateDelay = (provider as any).calculateBackoffDelay.bind(
+				provider
+			);
 
 			const delay1 = calculateDelay(1);
 			const delay2 = calculateDelay(2);
@@ -164,7 +169,9 @@ describe('BaseProvider', () => {
 
 		it('should identify rate limit errors correctly', () => {
 			const provider = new MockProvider({ apiKey: 'test-key' });
-			const isRateLimitError = (provider as any).isRateLimitError.bind(provider);
+			const isRateLimitError = (provider as any).isRateLimitError.bind(
+				provider
+			);
 
 			expect(isRateLimitError(new Error('Rate limit exceeded'))).toBe(true);
 			expect(isRateLimitError(new Error('Too many requests'))).toBe(true);

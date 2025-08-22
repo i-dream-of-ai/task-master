@@ -22,7 +22,9 @@ export interface TaskParser {
 export class PlaceholderParser implements TaskParser {
 	async parse(content: string): Promise<PlaceholderTask[]> {
 		// Simple placeholder parsing logic
-		const lines = content.split('\n').filter((line) => line.trim().startsWith('-'));
+		const lines = content
+			.split('\n')
+			.filter((line) => line.trim().startsWith('-'));
 		return lines.map((line, index) => ({
 			id: `task-${index + 1}`,
 			title: line.trim().replace(/^-\s*/, ''),

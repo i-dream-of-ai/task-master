@@ -103,7 +103,10 @@ export interface TaskCollection {
 /**
  * Type for creating a new task (without generated fields)
  */
-export type CreateTask = Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'subtasks'> & {
+export type CreateTask = Omit<
+	Task,
+	'id' | 'createdAt' | 'updatedAt' | 'subtasks'
+> & {
 	subtasks?: Omit<Subtask, 'id' | 'parentId' | 'createdAt' | 'updatedAt'>[];
 };
 
@@ -145,7 +148,15 @@ export interface TaskSortOptions {
 export function isTaskStatus(value: unknown): value is TaskStatus {
 	return (
 		typeof value === 'string' &&
-		['pending', 'in-progress', 'done', 'deferred', 'cancelled', 'blocked', 'review'].includes(value)
+		[
+			'pending',
+			'in-progress',
+			'done',
+			'deferred',
+			'cancelled',
+			'blocked',
+			'review'
+		].includes(value)
 	);
 }
 
@@ -153,7 +164,10 @@ export function isTaskStatus(value: unknown): value is TaskStatus {
  * Type guard to check if a value is a valid TaskPriority
  */
 export function isTaskPriority(value: unknown): value is TaskPriority {
-	return typeof value === 'string' && ['low', 'medium', 'high', 'critical'].includes(value);
+	return (
+		typeof value === 'string' &&
+		['low', 'medium', 'high', 'critical'].includes(value)
+	);
 }
 
 /**
@@ -161,7 +175,8 @@ export function isTaskPriority(value: unknown): value is TaskPriority {
  */
 export function isTaskComplexity(value: unknown): value is TaskComplexity {
 	return (
-		typeof value === 'string' && ['simple', 'moderate', 'complex', 'very-complex'].includes(value)
+		typeof value === 'string' &&
+		['simple', 'moderate', 'complex', 'very-complex'].includes(value)
 	);
 }
 

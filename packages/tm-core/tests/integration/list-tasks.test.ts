@@ -323,7 +323,9 @@ describe('TaskMasterCore - listTasks E2E', () => {
 
 		it('should validate task entities', async () => {
 			// Write invalid task data
-			const invalidDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tm-invalid-'));
+			const invalidDir = await fs.mkdtemp(
+				path.join(os.tmpdir(), 'tm-invalid-')
+			);
 			const tasksDir = path.join(invalidDir, '.taskmaster', 'tasks');
 			await fs.mkdir(tasksDir, { recursive: true });
 
@@ -349,7 +351,10 @@ describe('TaskMasterCore - listTasks E2E', () => {
 				}
 			};
 
-			await fs.writeFile(path.join(tasksDir, 'tasks.json'), JSON.stringify(invalidData));
+			await fs.writeFile(
+				path.join(tasksDir, 'tasks.json'),
+				JSON.stringify(invalidData)
+			);
 
 			const invalidCore = createTaskMasterCore(invalidDir);
 
@@ -379,7 +384,12 @@ describe('TaskMasterCore - listTasks E2E', () => {
 				}
 			];
 
-			const tagFile = path.join(tmpDir, '.taskmaster', 'tasks', 'feature-branch.json');
+			const tagFile = path.join(
+				tmpDir,
+				'.taskmaster',
+				'tasks',
+				'feature-branch.json'
+			);
 			await fs.writeFile(
 				tagFile,
 				JSON.stringify({

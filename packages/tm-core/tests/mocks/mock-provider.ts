@@ -58,7 +58,10 @@ export class MockProvider extends BaseProvider {
 			throw new Error('Mock provider error');
 		}
 
-		if (this.options.failAfterAttempts && this.attemptCount <= this.options.failAfterAttempts) {
+		if (
+			this.options.failAfterAttempts &&
+			this.attemptCount <= this.options.failAfterAttempts
+		) {
 			if (this.options.simulateRateLimit) {
 				throw new Error('Rate limit exceeded - too many requests (429)');
 			}
@@ -200,6 +203,8 @@ export class MockProvider extends BaseProvider {
 
 	// Override retry configuration for testing
 	protected getMaxRetries(): number {
-		return this.options.failAfterAttempts ? this.options.failAfterAttempts + 1 : 3;
+		return this.options.failAfterAttempts
+			? this.options.failAfterAttempts + 1
+			: 3;
 	}
 }

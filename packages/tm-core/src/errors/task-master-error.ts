@@ -215,7 +215,14 @@ export class TaskMasterError extends Error {
 	private containsSensitiveInfo(obj: any): boolean {
 		if (typeof obj !== 'object' || obj === null) return false;
 
-		const sensitiveKeys = ['password', 'token', 'key', 'secret', 'auth', 'credential'];
+		const sensitiveKeys = [
+			'password',
+			'token',
+			'key',
+			'secret',
+			'auth',
+			'credential'
+		];
 		const objString = JSON.stringify(obj).toLowerCase();
 
 		return sensitiveKeys.some((key) => objString.includes(key));
@@ -297,7 +304,9 @@ export class TaskMasterError extends Error {
 	/**
 	 * Create a new error with additional context
 	 */
-	public withContext(additionalContext: Partial<ErrorContext>): TaskMasterError {
+	public withContext(
+		additionalContext: Partial<ErrorContext>
+	): TaskMasterError {
 		return new TaskMasterError(
 			this.message,
 			this.code,

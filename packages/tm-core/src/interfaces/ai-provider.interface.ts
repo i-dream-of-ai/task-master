@@ -282,7 +282,10 @@ export abstract class BaseAIProvider implements IAIProvider {
 	}
 
 	// Abstract methods that must be implemented by concrete classes
-	abstract generateCompletion(prompt: string, options?: AIOptions): Promise<AIResponse>;
+	abstract generateCompletion(
+		prompt: string,
+		options?: AIOptions
+	): Promise<AIResponse>;
 	abstract generateStreamingCompletion(
 		prompt: string,
 		options?: AIOptions
@@ -306,7 +309,9 @@ export abstract class BaseAIProvider implements IAIProvider {
 		const modelExists = availableModels.some((m) => m.id === model);
 
 		if (!modelExists) {
-			throw new Error(`Model "${model}" is not available for provider "${this.getName()}"`);
+			throw new Error(
+				`Model "${model}" is not available for provider "${this.getName()}"`
+			);
 		}
 
 		this.currentModel = model;
@@ -342,7 +347,11 @@ export abstract class BaseAIProvider implements IAIProvider {
 	 * @param duration - Request duration in milliseconds
 	 * @param success - Whether the request was successful
 	 */
-	protected updateUsageStats(response: AIResponse, duration: number, success: boolean): void {
+	protected updateUsageStats(
+		response: AIResponse,
+		duration: number,
+		success: boolean
+	): void {
 		if (!this.usageStats) return;
 
 		this.usageStats.totalRequests++;
@@ -361,15 +370,18 @@ export abstract class BaseAIProvider implements IAIProvider {
 		}
 
 		// Update average response time
-		const totalTime = this.usageStats.averageResponseTime * (this.usageStats.totalRequests - 1);
-		this.usageStats.averageResponseTime = (totalTime + duration) / this.usageStats.totalRequests;
+		const totalTime =
+			this.usageStats.averageResponseTime * (this.usageStats.totalRequests - 1);
+		this.usageStats.averageResponseTime =
+			(totalTime + duration) / this.usageStats.totalRequests;
 
 		// Update success rate
 		const successCount = Math.floor(
 			this.usageStats.successRate * (this.usageStats.totalRequests - 1)
 		);
 		const newSuccessCount = successCount + (success ? 1 : 0);
-		this.usageStats.successRate = newSuccessCount / this.usageStats.totalRequests;
+		this.usageStats.successRate =
+			newSuccessCount / this.usageStats.totalRequests;
 
 		this.usageStats.lastRequestAt = new Date().toISOString();
 	}

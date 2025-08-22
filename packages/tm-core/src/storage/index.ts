@@ -9,7 +9,10 @@ export { ApiStorage, type ApiStorageConfig } from './api-storage.js';
 export { StorageFactory } from './storage-factory.js';
 
 // Export storage interface and types
-export type { IStorage, StorageStats } from '../interfaces/storage.interface.js';
+export type {
+	IStorage,
+	StorageStats
+} from '../interfaces/storage.interface.js';
 
 // Placeholder exports - these will be implemented in later tasks
 export interface StorageAdapter {

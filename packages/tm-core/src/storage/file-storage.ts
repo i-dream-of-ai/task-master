@@ -5,7 +5,10 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { Task, TaskMetadata } from '../types/index.js';
-import type { IStorage, StorageStats } from '../interfaces/storage.interface.js';
+import type {
+	IStorage,
+	StorageStats
+} from '../interfaces/storage.interface.js';
 
 /**
  * File storage data structure
@@ -80,7 +83,7 @@ export class FileStorage implements IStorage {
 			totalTags: tags.length,
 			lastModified: lastModified || new Date().toISOString(),
 			storageSize: 0, // Could calculate actual file sizes if needed
-			tagStats: tags.map(tag => ({
+			tagStats: tags.map((tag) => ({
 				tag,
 				taskCount: 0, // Would need to load each tag to get accurate count
 				lastModified: lastModified || new Date().toISOString()
@@ -218,14 +221,18 @@ export class FileStorage implements IStorage {
 	/**
 	 * Update a specific task
 	 */
-	async updateTask(taskId: string, updates: Partial<Task>, tag?: string): Promise<void> {
+	async updateTask(
+		taskId: string,
+		updates: Partial<Task>,
+		tag?: string
+	): Promise<void> {
 		const tasks = await this.loadTasks(tag);
-		const taskIndex = tasks.findIndex(t => t.id === taskId);
-		
+		const taskIndex = tasks.findIndex((t) => t.id === taskId);
+
 		if (taskIndex === -1) {
 			throw new Error(`Task ${taskId} not found`);
 		}
-		
+
 		tasks[taskIndex] = { ...tasks[taskIndex], ...updates, id: taskId };
 		await this.saveTasks(tasks, tag);
 	}
@@ -235,12 +242,12 @@ export class FileStorage implements IStorage {
 	 */
 	async deleteTask(taskId: string, tag?: string): Promise<void> {
 		const tasks = await this.loadTasks(tag);
-		const filteredTasks = tasks.filter(t => t.id !== taskId);
-		
+		const filteredTasks = tasks.filter((t) => t.id !== taskId);
+
 		if (filteredTasks.length === tasks.length) {
 			throw new Error(`Task ${taskId} not found`);
 		}
-		
+
 		await this.saveTasks(filteredTasks, tag);
 	}
 
@@ -264,11 +271,13 @@ export class FileStorage implements IStorage {
 	async renameTag(oldTag: string, newTag: string): Promise<void> {
 		const oldPath = this.getTasksPath(oldTag);
 		const newPath = this.getTasksPath(newTag);
-		
+
 		try {
 			await fs.rename(oldPath, newPath);
 		} catch (error: any) {
-			throw new Error(`Failed to rename tag from ${oldTag} to ${newTag}: ${error.message}`);
+			throw new Error(
+				`Failed to rename tag from ${oldTag} to ${newTag}: ${error.message}`
+			);
 		}
 	}
 
@@ -278,7 +287,7 @@ export class FileStorage implements IStorage {
 	async copyTag(sourceTag: string, targetTag: string): Promise<void> {
 		const tasks = await this.loadTasks(sourceTag);
 		const metadata = await this.loadMetadata(sourceTag);
-		
+
 		await this.saveTasks(tasks, targetTag);
 		if (metadata) {
 			await this.saveMetadata(metadata, targetTag);
@@ -323,7 +332,9 @@ export class FileStorage implements IStorage {
 	/**
 	 * Read and parse JSON file with error handling
 	 */
-	private async readJsonFile(filePath: string): Promise<FileStorageData | null> {
+	private async readJsonFile(
+		filePath: string
+	): Promise<FileStorageData | null> {
 		try {
 			const content = await fs.readFile(filePath, 'utf-8');
 			return JSON.parse(content);
@@ -341,7 +352,10 @@ export class FileStorage implements IStorage {
 	/**
 	 * Write JSON file with atomic operation using temp file
 	 */
-	private async writeJsonFile(filePath: string, data: FileStorageData): Promise<void> {
+	private async writeJsonFile(
+		filePath: string,
+		data: FileStorageData
+	): Promise<void> {
 		// Use file locking to prevent concurrent writes
 		const lockKey = filePath;
 		const existingLock = this.fileLocks.get(lockKey);
@@ -363,7 +377,10 @@ export class FileStorage implements IStorage {
 	/**
 	 * Perform the actual write operation
 	 */
-	private async performWrite(filePath: string, data: FileStorageData): Promise<void> {
+	private async performWrite(
+		filePath: string,
+		data: FileStorageData
+	): Promise<void> {
 		const tempPath = `${filePath}.tmp`;
 
 		try {
@@ -406,11 +423,11 @@ export class FileStorage implements IStorage {
 		try {
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 			const backupPath = this.getBackupPath(filePath, timestamp);
-			
+
 			// Ensure backup directory exists
 			const backupDir = path.dirname(backupPath);
 			await fs.mkdir(backupDir, { recursive: true });
-			
+
 			await fs.copyFile(filePath, backupPath);
 
 			// Clean up old backups if needed
@@ -432,7 +449,9 @@ export class FileStorage implements IStorage {
 		try {
 			const files = await fs.readdir(dir);
 			const backupFiles = files
-				.filter((f) => f.startsWith(`${basename}.backup.`) && f.endsWith('.json'))
+				.filter(
+					(f) => f.startsWith(`${basename}.backup.`) && f.endsWith('.json')
+				)
 				.sort()
 				.reverse();
 

@@ -3,7 +3,10 @@
  * This provides storage via REST API instead of local file system
  */
 
-import type { IStorage, StorageStats } from '../interfaces/storage.interface.js';
+import type {
+	IStorage,
+	StorageStats
+} from '../interfaces/storage.interface.js';
 import type { Task, TaskMetadata } from '../types/index.js';
 import { ERROR_CODES, TaskMasterError } from '../errors/task-master-error.js';
 
@@ -45,7 +48,7 @@ export class ApiStorage implements IStorage {
 
 	constructor(config: ApiStorageConfig) {
 		this.validateConfig(config);
-		
+
 		this.config = {
 			endpoint: config.endpoint.replace(/\/$/, ''), // Remove trailing slash
 			accessToken: config.accessToken,
@@ -111,7 +114,7 @@ export class ApiStorage implements IStorage {
 	 */
 	private async verifyConnection(): Promise<void> {
 		const response = await this.makeRequest<{ status: string }>('/health');
-		
+
 		if (!response.success) {
 			throw new Error(`API health check failed: ${response.error}`);
 		}
@@ -124,7 +127,7 @@ export class ApiStorage implements IStorage {
 		await this.ensureInitialized();
 
 		try {
-			const endpoint = tag 
+			const endpoint = tag
 				? `/projects/${this.config.projectId}/tasks?tag=${encodeURIComponent(tag)}`
 				: `/projects/${this.config.projectId}/tasks`;
 
@@ -291,7 +294,9 @@ export class ApiStorage implements IStorage {
 				? `/projects/${this.config.projectId}/metadata?tag=${encodeURIComponent(tag)}`
 				: `/projects/${this.config.projectId}/metadata`;
 
-			const response = await this.makeRequest<{ metadata: TaskMetadata }>(endpoint);
+			const response = await this.makeRequest<{ metadata: TaskMetadata }>(
+				endpoint
+			);
 
 			if (!response.success) {
 				return null;
@@ -355,10 +360,10 @@ export class ApiStorage implements IStorage {
 		try {
 			// First load existing tasks
 			const existingTasks = await this.loadTasks(tag);
-			
+
 			// Append new tasks
 			const allTasks = [...existingTasks, ...tasks];
-			
+
 			// Save all tasks
 			await this.saveTasks(allTasks, tag);
 		} catch (error) {
@@ -374,20 +379,24 @@ export class ApiStorage implements IStorage {
 	/**
 	 * Update a specific task
 	 */
-	async updateTask(taskId: string, updates: Partial<Task>, tag?: string): Promise<void> {
+	async updateTask(
+		taskId: string,
+		updates: Partial<Task>,
+		tag?: string
+	): Promise<void> {
 		await this.ensureInitialized();
 
 		try {
 			// Load the task
 			const task = await this.loadTask(taskId, tag);
-			
+
 			if (!task) {
 				throw new Error(`Task ${taskId} not found`);
 			}
 
 			// Merge updates
 			const updatedTask = { ...task, ...updates, id: taskId };
-			
+
 			// Save updated task
 			await this.saveTask(updatedTask, tag);
 		} catch (error) {
@@ -500,13 +509,15 @@ export class ApiStorage implements IStorage {
 			}
 
 			// Return stats or default values
-			return response.data?.stats || {
-				totalTasks: 0,
-				totalTags: 0,
-				storageSize: 0,
-				lastModified: new Date().toISOString(),
-				tagStats: []
-			};
+			return (
+				response.data?.stats || {
+					totalTasks: 0,
+					totalTags: 0,
+					storageSize: 0,
+					lastModified: new Date().toISOString(),
+					tagStats: []
+				}
+			);
 		} catch (error) {
 			throw new TaskMasterError(
 				'Failed to get stats from API',
@@ -627,9 +638,9 @@ export class ApiStorage implements IStorage {
 			const options: RequestInit = {
 				method,
 				headers: {
-					'Authorization': `Bearer ${this.config.accessToken}`,
+					Authorization: `Bearer ${this.config.accessToken}`,
 					'Content-Type': 'application/json',
-					'Accept': 'application/json'
+					Accept: 'application/json'
 				},
 				signal: controller.signal
 			};
@@ -654,16 +665,16 @@ export class ApiStorage implements IStorage {
 
 					// Handle specific error codes
 					if (response.status === 401) {
-						return { 
-							success: false, 
-							error: 'Authentication failed - check access token' 
+						return {
+							success: false,
+							error: 'Authentication failed - check access token'
 						};
 					}
 
 					if (response.status === 404) {
-						return { 
-							success: false, 
-							error: 'Resource not found' 
+						return {
+							success: false,
+							error: 'Resource not found'
 						};
 					}
 
@@ -678,7 +689,10 @@ export class ApiStorage implements IStorage {
 					const errorData = data as any;
 					return {
 						success: false,
-						error: errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`
+						error:
+							errorData.error ||
+							errorData.message ||
+							`HTTP ${response.status}: ${response.statusText}`
 					};
 				} catch (error) {
 					lastError = error as Error;
@@ -705,6 +719,6 @@ export class ApiStorage implements IStorage {
 	 * Delay helper for retries
 	 */
 	private delay(ms: number): Promise<void> {
-		return new Promise(resolve => setTimeout(resolve, ms));
+		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
 }

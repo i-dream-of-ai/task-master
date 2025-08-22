@@ -33,9 +33,14 @@ export function generateTaskId(): string {
  * // Returns: "TASK-123-A7B3.2"
  * ```
  */
-export function generateSubtaskId(parentId: string, existingSubtasks: string[] = []): string {
+export function generateSubtaskId(
+	parentId: string,
+	existingSubtasks: string[] = []
+): string {
 	// Find existing subtasks for this parent
-	const parentSubtasks = existingSubtasks.filter((id) => id.startsWith(`${parentId}.`));
+	const parentSubtasks = existingSubtasks.filter((id) =>
+		id.startsWith(`${parentId}.`)
+	);
 
 	// Extract sequential numbers and find the highest
 	const sequentialNumbers = parentSubtasks
@@ -48,7 +53,8 @@ export function generateSubtaskId(parentId: string, existingSubtasks: string[] =
 		.sort((a, b) => a - b);
 
 	// Determine the next sequential number
-	const nextSequential = sequentialNumbers.length > 0 ? Math.max(...sequentialNumbers) + 1 : 1;
+	const nextSequential =
+		sequentialNumbers.length > 0 ? Math.max(...sequentialNumbers) + 1 : 1;
 
 	return `${parentId}.${nextSequential}`;
 }

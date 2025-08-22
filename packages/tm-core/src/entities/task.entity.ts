@@ -3,7 +3,12 @@
  */
 
 import { ERROR_CODES, TaskMasterError } from '../errors/task-master-error.js';
-import type { Subtask, Task, TaskPriority, TaskStatus } from '../types/index.js';
+import type {
+	Subtask,
+	Task,
+	TaskPriority,
+	TaskStatus
+} from '../types/index.js';
 
 /**
  * Task entity representing a task with business logic
@@ -64,11 +69,17 @@ export class TaskEntity implements Task {
 		}
 
 		if (!data.title || data.title.trim().length === 0) {
-			throw new TaskMasterError('Task title is required', ERROR_CODES.VALIDATION_ERROR);
+			throw new TaskMasterError(
+				'Task title is required',
+				ERROR_CODES.VALIDATION_ERROR
+			);
 		}
 
 		if (!data.description || data.description.trim().length === 0) {
-			throw new TaskMasterError('Task description is required', ERROR_CODES.VALIDATION_ERROR);
+			throw new TaskMasterError(
+				'Task description is required',
+				ERROR_CODES.VALIDATION_ERROR
+			);
 		}
 
 		if (!this.isValidStatus(data.status)) {
@@ -184,7 +195,10 @@ export class TaskEntity implements Task {
 	 */
 	updateStatus(newStatus: TaskStatus): void {
 		if (!this.isValidStatus(newStatus)) {
-			throw new TaskMasterError(`Invalid status: ${newStatus}`, ERROR_CODES.VALIDATION_ERROR);
+			throw new TaskMasterError(
+				`Invalid status: ${newStatus}`,
+				ERROR_CODES.VALIDATION_ERROR
+			);
 		}
 
 		// Business rule: Cannot move from done to pending

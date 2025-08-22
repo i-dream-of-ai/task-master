@@ -16,7 +16,12 @@ import {
 	version
 } from '@tm/core';
 
-import type { PlaceholderTask, TaskId, TaskPriority, TaskStatus } from '@tm/core';
+import type {
+	PlaceholderTask,
+	TaskId,
+	TaskPriority,
+	TaskStatus
+} from '@tm/core';
 
 describe('tm-core smoke tests', () => {
 	describe('package metadata', () => {
@@ -44,7 +49,6 @@ describe('tm-core smoke tests', () => {
 			expect(formatted).toBe('2023-01-01T00:00:00.000Z');
 		});
 	});
-
 
 	describe('placeholder storage', () => {
 		it('should perform basic storage operations', async () => {

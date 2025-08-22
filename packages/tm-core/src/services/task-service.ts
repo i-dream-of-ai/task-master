@@ -49,7 +49,7 @@ export class TaskService {
 
 	constructor(configManager: ConfigManager) {
 		this.configManager = configManager;
-		
+
 		// Storage will be created during initialization
 		this.storage = null as any;
 	}
@@ -66,7 +66,7 @@ export class TaskService {
 		// Create storage based on configuration
 		const storageConfig = this.configManager.getStorageConfig();
 		const projectRoot = this.configManager.getProjectRoot();
-		
+
 		this.storage = StorageFactory.create(
 			{ storage: storageConfig } as any,
 			projectRoot
@@ -74,7 +74,7 @@ export class TaskService {
 
 		// Initialize storage
 		await this.storage.initialize();
-		
+
 		this.initialized = true;
 	}
 
@@ -103,11 +103,11 @@ export class TaskService {
 			}
 
 			// Convert back to plain objects
-			let tasks = filteredEntities.map(entity => entity.toJSON());
+			let tasks = filteredEntities.map((entity) => entity.toJSON());
 
 			// Handle subtasks option
 			if (options.includeSubtasks === false) {
-				tasks = tasks.map(task => ({
+				tasks = tasks.map((task) => ({
 					...task,
 					subtasks: []
 				}));
@@ -124,7 +124,7 @@ export class TaskService {
 			throw new TaskMasterError(
 				'Failed to get task list',
 				ERROR_CODES.INTERNAL_ERROR,
-				{ 
+				{
 					operation: 'getTaskList',
 					tag,
 					hasFilter: !!options.filter
@@ -138,28 +138,28 @@ export class TaskService {
 	 * Get a single task by ID
 	 */
 	async getTask(taskId: string, tag?: string): Promise<Task | null> {
-		const result = await this.getTaskList({ 
+		const result = await this.getTaskList({
 			tag,
-			includeSubtasks: true 
+			includeSubtasks: true
 		});
-		
-		return result.tasks.find(t => t.id === taskId) || null;
+
+		return result.tasks.find((t) => t.id === taskId) || null;
 	}
 
 	/**
 	 * Get tasks filtered by status
 	 */
 	async getTasksByStatus(
-		status: TaskStatus | TaskStatus[], 
+		status: TaskStatus | TaskStatus[],
 		tag?: string
 	): Promise<Task[]> {
 		const statuses = Array.isArray(status) ? status : [status];
-		
+
 		const result = await this.getTaskList({
 			tag,
 			filter: { status: statuses }
 		});
-		
+
 		return result.tasks;
 	}
 
@@ -173,9 +173,9 @@ export class TaskService {
 		blocked: number;
 		storageType: 'file' | 'api';
 	}> {
-		const result = await this.getTaskList({ 
+		const result = await this.getTaskList({
 			tag,
-			includeSubtasks: true 
+			includeSubtasks: true
 		});
 
 		const stats = {
@@ -188,22 +188,27 @@ export class TaskService {
 
 		// Initialize all statuses
 		const allStatuses: TaskStatus[] = [
-			'pending', 'in-progress', 'done', 
-			'deferred', 'cancelled', 'blocked', 'review'
+			'pending',
+			'in-progress',
+			'done',
+			'deferred',
+			'cancelled',
+			'blocked',
+			'review'
 		];
-		
-		allStatuses.forEach(status => {
+
+		allStatuses.forEach((status) => {
 			stats.byStatus[status] = 0;
 		});
 
 		// Count tasks
-		result.tasks.forEach(task => {
+		result.tasks.forEach((task) => {
 			stats.byStatus[task.status]++;
-			
+
 			if (task.subtasks && task.subtasks.length > 0) {
 				stats.withSubtasks++;
 			}
-			
+
 			if (task.status === 'blocked') {
 				stats.blocked++;
 			}
@@ -225,21 +230,19 @@ export class TaskService {
 
 		// Find tasks with no dependencies or all dependencies satisfied
 		const completedIds = new Set(
-			result.tasks
-				.filter(t => t.status === 'done')
-				.map(t => t.id)
+			result.tasks.filter((t) => t.status === 'done').map((t) => t.id)
 		);
 
-		const availableTasks = result.tasks.filter(task => {
+		const availableTasks = result.tasks.filter((task) => {
 			if (task.status === 'done' || task.status === 'blocked') {
 				return false;
 			}
-			
+
 			if (!task.dependencies || task.dependencies.length === 0) {
 				return true;
 			}
-			
-			return task.dependencies.every(depId => 
+
+			return task.dependencies.every((depId) =>
 				completedIds.has(depId.toString())
 			);
 		});
@@ -259,10 +262,12 @@ export class TaskService {
 	 * Apply filters to task entities
 	 */
 	private applyFilters(tasks: TaskEntity[], filter: TaskFilter): TaskEntity[] {
-		return tasks.filter(task => {
+		return tasks.filter((task) => {
 			// Status filter
 			if (filter.status) {
-				const statuses = Array.isArray(filter.status) ? filter.status : [filter.status];
+				const statuses = Array.isArray(filter.status)
+					? filter.status
+					: [filter.status];
 				if (!statuses.includes(task.status)) {
 					return false;
 				}
@@ -270,7 +275,9 @@ export class TaskService {
 
 			// Priority filter
 			if (filter.priority) {
-				const priorities = Array.isArray(filter.priority) ? filter.priority : [filter.priority];
+				const priorities = Array.isArray(filter.priority)
+					? filter.priority
+					: [filter.priority];
 				if (!priorities.includes(task.priority)) {
 					return false;
 				}
@@ -278,7 +285,10 @@ export class TaskService {
 
 			// Tags filter
 			if (filter.tags && filter.tags.length > 0) {
-				if (!task.tags || !filter.tags.some(tag => task.tags?.includes(tag))) {
+				if (
+					!task.tags ||
+					!filter.tags.some((tag) => task.tags?.includes(tag))
+				) {
 					return false;
 				}
 			}
@@ -292,8 +302,8 @@ export class TaskService {
 
 			// Complexity filter
 			if (filter.complexity) {
-				const complexities = Array.isArray(filter.complexity) 
-					? filter.complexity 
+				const complexities = Array.isArray(filter.complexity)
+					? filter.complexity
 					: [filter.complexity];
 				if (!task.complexity || !complexities.includes(task.complexity)) {
 					return false;
@@ -304,9 +314,11 @@ export class TaskService {
 			if (filter.search) {
 				const searchLower = filter.search.toLowerCase();
 				const inTitle = task.title.toLowerCase().includes(searchLower);
-				const inDescription = task.description.toLowerCase().includes(searchLower);
+				const inDescription = task.description
+					.toLowerCase()
+					.includes(searchLower);
 				const inDetails = task.details.toLowerCase().includes(searchLower);
-				
+
 				if (!inTitle && !inDescription && !inDetails) {
 					return false;
 				}

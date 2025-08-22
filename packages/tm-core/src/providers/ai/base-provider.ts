@@ -3,8 +3,15 @@
  * Provides common functionality, error handling, and retry logic
  */
 
-import { ERROR_CODES, TaskMasterError } from '../../errors/task-master-error.js';
-import type { AIOptions, AIResponse, IAIProvider } from '../../interfaces/ai-provider.interface.js';
+import {
+	ERROR_CODES,
+	TaskMasterError
+} from '../../errors/task-master-error.js';
+import type {
+	AIOptions,
+	AIResponse,
+	IAIProvider
+} from '../../interfaces/ai-provider.interface.js';
 
 // Constants for retry logic
 const DEFAULT_MAX_RETRIES = 3;
@@ -67,7 +74,10 @@ export abstract class BaseProvider implements IAIProvider {
 
 	constructor(config: BaseProviderConfig) {
 		if (!config.apiKey) {
-			throw new TaskMasterError('API key is required', ERROR_CODES.AUTHENTICATION_ERROR);
+			throw new TaskMasterError(
+				'API key is required',
+				ERROR_CODES.AUTHENTICATION_ERROR
+			);
 		}
 		this.apiKey = config.apiKey;
 		this.model = config.model || this.getDefaultModel();
@@ -77,11 +87,17 @@ export abstract class BaseProvider implements IAIProvider {
 	 * Template method for generating completions
 	 * Handles validation, retries, and error handling
 	 */
-	async generateCompletion(prompt: string, options?: AIOptions): Promise<AIResponse> {
+	async generateCompletion(
+		prompt: string,
+		options?: AIOptions
+	): Promise<AIResponse> {
 		// Validate input
 		const validation = this.validateInput(prompt, options);
 		if (!validation.valid) {
-			throw new TaskMasterError(validation.error || 'Invalid input', ERROR_CODES.VALIDATION_ERROR);
+			throw new TaskMasterError(
+				validation.error || 'Invalid input',
+				ERROR_CODES.VALIDATION_ERROR
+			);
 		}
 
 		// Prepare request
@@ -94,7 +110,10 @@ export abstract class BaseProvider implements IAIProvider {
 		for (let attempt = 1; attempt <= maxRetries; attempt++) {
 			try {
 				const startTime = Date.now();
-				const result = await this.generateCompletionInternal(prepared.prompt, prepared.options);
+				const result = await this.generateCompletionInternal(
+					prepared.prompt,
+					prepared.options
+				);
 
 				const duration = Date.now() - startTime;
 				return this.handleResponse(result, duration, prepared);
@@ -117,7 +136,10 @@ export abstract class BaseProvider implements IAIProvider {
 	/**
 	 * Validate input prompt and options
 	 */
-	protected validateInput(prompt: string, options?: AIOptions): ValidationResult {
+	protected validateInput(
+		prompt: string,
+		options?: AIOptions
+	): ValidationResult {
 		// Validate prompt
 		if (!prompt || typeof prompt !== 'string') {
 			return { valid: false, error: 'Prompt must be a non-empty string' };
@@ -151,7 +173,10 @@ export abstract class BaseProvider implements IAIProvider {
 	 */
 	protected validateOptions(options: AIOptions): ValidationResult {
 		if (options.temperature !== undefined) {
-			if (options.temperature < MIN_TEMPERATURE || options.temperature > MAX_TEMPERATURE) {
+			if (
+				options.temperature < MIN_TEMPERATURE ||
+				options.temperature > MAX_TEMPERATURE
+			) {
 				return {
 					valid: false,
 					error: `Temperature must be between ${MIN_TEMPERATURE} and ${MAX_TEMPERATURE}`
@@ -160,7 +185,10 @@ export abstract class BaseProvider implements IAIProvider {
 		}
 
 		if (options.maxTokens !== undefined) {
-			if (options.maxTokens < MIN_MAX_TOKENS || options.maxTokens > MAX_MAX_TOKENS) {
+			if (
+				options.maxTokens < MIN_MAX_TOKENS ||
+				options.maxTokens > MAX_MAX_TOKENS
+			) {
 				return {
 					valid: false,
 					error: `Max tokens must be between ${MIN_MAX_TOKENS} and ${MAX_MAX_TOKENS}`
@@ -180,7 +208,10 @@ export abstract class BaseProvider implements IAIProvider {
 	/**
 	 * Prepare request for processing
 	 */
-	protected prepareRequest(prompt: string, options?: AIOptions): PreparedRequest {
+	protected prepareRequest(
+		prompt: string,
+		options?: AIOptions
+	): PreparedRequest {
 		const defaultOptions = this.getDefaultOptions();
 		const mergedOptions = { ...defaultOptions, ...options };
 
@@ -203,8 +234,10 @@ export abstract class BaseProvider implements IAIProvider {
 		duration: number,
 		request: PreparedRequest
 	): AIResponse {
-		const inputTokens = result.inputTokens || this.calculateTokens(request.prompt);
-		const outputTokens = result.outputTokens || this.calculateTokens(result.content);
+		const inputTokens =
+			result.inputTokens || this.calculateTokens(request.prompt);
+		const outputTokens =
+			result.outputTokens || this.calculateTokens(result.content);
 
 		return {
 			content: result.content,
@@ -320,7 +353,8 @@ export abstract class BaseProvider implements IAIProvider {
 	 * Calculate exponential backoff delay with jitter
 	 */
 	protected calculateBackoffDelay(attempt: number): number {
-		const exponentialDelay = BASE_RETRY_DELAY_MS * BACKOFF_MULTIPLIER ** (attempt - 1);
+		const exponentialDelay =
+			BASE_RETRY_DELAY_MS * BACKOFF_MULTIPLIER ** (attempt - 1);
 		const clampedDelay = Math.min(exponentialDelay, MAX_RETRY_DELAY_MS);
 
 		// Add jitter to prevent thundering herd
@@ -394,11 +428,16 @@ export abstract class BaseProvider implements IAIProvider {
 		options?: AIOptions
 	): AsyncIterator<Partial<AIResponse>>;
 	abstract isAvailable(): Promise<boolean>;
-	abstract getProviderInfo(): import('../../interfaces/ai-provider.interface.js').ProviderInfo;
-	abstract getAvailableModels(): import('../../interfaces/ai-provider.interface.js').AIModel[];
+	abstract getProviderInfo(): import(
+		'../../interfaces/ai-provider.interface.js'
+	).ProviderInfo;
+	abstract getAvailableModels(): import(
+		'../../interfaces/ai-provider.interface.js'
+	).AIModel[];
 	abstract validateCredentials(): Promise<boolean>;
 	abstract getUsageStats(): Promise<
-		import('../../interfaces/ai-provider.interface.js').ProviderUsageStats | null
+		| import('../../interfaces/ai-provider.interface.js').ProviderUsageStats
+		| null
 	>;
 	abstract initialize(): Promise<void>;
 	abstract close(): Promise<void>;
