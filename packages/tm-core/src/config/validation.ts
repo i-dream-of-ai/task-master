@@ -16,7 +16,12 @@ export const taskPrioritySchema = z.enum(['low', 'medium', 'high', 'critical']);
 /**
  * Task complexity validation schema
  */
-export const taskComplexitySchema = z.enum(['simple', 'moderate', 'complex', 'very-complex']);
+export const taskComplexitySchema = z.enum([
+	'simple',
+	'moderate',
+	'complex',
+	'very-complex'
+]);
 
 /**
  * Log level validation schema
@@ -25,13 +30,18 @@ export const logLevelSchema = z.enum(['error', 'warn', 'info', 'debug']);
 
 /**
  * Storage type validation schema
+ * @see can add more storage types here
  */
-export const storageTypeSchema = z.enum(['file', 'memory', 'database']);
+export const storageTypeSchema = z.enum(['file', 'api']);
 
 /**
  * Tag naming convention validation schema
  */
-export const tagNamingConventionSchema = z.enum(['kebab-case', 'camelCase', 'snake_case']);
+export const tagNamingConventionSchema = z.enum([
+	'kebab-case',
+	'camelCase',
+	'snake_case'
+]);
 
 /**
  * Buffer encoding validation schema
@@ -223,4 +233,6 @@ export const cacheConfigSchema = z
 // ============================================================================
 
 export type ConfigurationSchema = z.infer<typeof configurationSchema>;
-export type PartialConfigurationSchema = z.infer<typeof partialConfigurationSchema>;
+export type PartialConfigurationSchema = z.infer<
+	typeof partialConfigurationSchema
+>;

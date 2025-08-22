@@ -33,6 +33,16 @@ export type TaskComplexity = 'simple' | 'moderate' | 'complex' | 'very-complex';
 // ============================================================================
 
 /**
+ * Placeholder task interface for temporary/minimal task objects
+ */
+export interface PlaceholderTask {
+	id: string;
+	title: string;
+	status: TaskStatus;
+	priority: TaskPriority;
+}
+
+/**
  * Base task interface
  */
 export interface Task {

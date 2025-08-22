@@ -49,6 +49,8 @@ export const ERROR_CODES = {
 
 	// Generic errors
 	INTERNAL_ERROR: 'INTERNAL_ERROR',
+	INVALID_INPUT: 'INVALID_INPUT',
+	NOT_IMPLEMENTED: 'NOT_IMPLEMENTED',
 	UNKNOWN_ERROR: 'UNKNOWN_ERROR'
 } as const;
 
@@ -74,6 +76,8 @@ export interface ErrorContext {
 	errorId?: string;
 	/** Additional metadata */
 	metadata?: Record<string, any>;
+	/** Allow additional properties for flexibility */
+	[key: string]: any;
 }
 
 /**
@@ -192,7 +196,7 @@ export class TaskMasterError extends Error {
 	 * Removes sensitive information and internal details
 	 */
 	public getSanitizedDetails(): Record<string, any> {
-		const { details, userMessage, resource, operation } = this.context;
+		const { details, resource, operation } = this.context;
 
 		return {
 			code: this.code,

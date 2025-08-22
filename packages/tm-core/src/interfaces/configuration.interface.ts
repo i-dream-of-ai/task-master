@@ -78,9 +78,13 @@ export interface TagSettings {
  */
 export interface StorageSettings {
 	/** Storage backend type */
-	type: 'file' | 'memory' | 'database';
+	type: 'file' | 'api';
 	/** Base path for file storage */
 	basePath?: string;
+	/** API endpoint for API storage (Hamster integration) */
+	apiEndpoint?: string;
+	/** Access token for API authentication */
+	apiAccessToken?: string;
 	/** Enable automatic backups */
 	enableBackup: boolean;
 	/** Maximum number of backups to retain */

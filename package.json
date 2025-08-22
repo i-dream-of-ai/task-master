@@ -5,23 +5,28 @@
 	"main": "index.js",
 	"type": "module",
 	"bin": {
-		"task-master": "bin/task-master.js",
-		"task-master-mcp": "mcp-server/server.js",
-		"task-master-ai": "mcp-server/server.js"
+		"task-master": "dist/task-master.js",
+		"task-master-mcp": "dist/mcp-server.js",
+		"task-master-ai": "dist/mcp-server.js"
 	},
 	"workspaces": ["apps/*", "packages/*", "."],
 	"scripts": {
+		"build": "npm run build:packages && tsup",
+		"dev": "tsup --watch --onSuccess 'echo Build complete'",
+		"build:packages": "npm run build:core && npm run build:cli",
+		"build:core": "cd packages/tm-core && npm run build",
+		"build:cli": "cd apps/cli && npm run build",
 		"test": "node --experimental-vm-modules node_modules/.bin/jest",
 		"test:fails": "node --experimental-vm-modules node_modules/.bin/jest --onlyFailures",
 		"test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
 		"test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
 		"test:e2e": "./tests/e2e/run_e2e.sh",
 		"test:e2e-report": "./tests/e2e/run_e2e.sh --analyze-log",
-		"prepare": "chmod +x bin/task-master.js mcp-server/server.js",
+		"prepare": "npm run build && chmod +x dist/task-master.js dist/mcp-server.js",
 		"changeset": "changeset",
 		"release": "changeset publish",
-		"inspector": "npx @modelcontextprotocol/inspector node mcp-server/server.js",
-		"mcp-server": "node mcp-server/server.js",
+		"inspector": "npx @modelcontextprotocol/inspector node dist/mcp-server.js",
+		"mcp-server": "node dist/mcp-server.js",
 		"format-check": "biome format .",
 		"format": "biome format . --write"
 	},
@@ -127,6 +132,7 @@
 		"mock-fs": "^5.5.0",
 		"prettier": "^3.5.3",
 		"supertest": "^7.1.0",
+		"tsup": "^8.5.0",
 		"tsx": "^4.16.2"
 	}
 }

@@ -5,7 +5,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { Task, TaskMetadata } from '../types/index.js';
-import { BaseStorage, type StorageStats } from './storage.interface.js';
+import type { IStorage, StorageStats } from '../interfaces/storage.interface.js';
 
 /**
  * File storage data structure
@@ -18,15 +18,16 @@ interface FileStorageData {
 /**
  * File-based storage implementation using JSON files
  */
-export class FileStorage extends BaseStorage {
-	private readonly projectPath: string;
+export class FileStorage implements IStorage {
 	private readonly basePath: string;
 	private readonly tasksDir: string;
 	private fileLocks: Map<string, Promise<void>> = new Map();
+	private config = {
+		autoBackup: false,
+		maxBackups: 5
+	};
 
-	constructor(projectPath: string, config = {}) {
-		super(config);
-		this.projectPath = projectPath;
+	constructor(projectPath: string) {
 		this.basePath = path.join(projectPath, '.taskmaster');
 		this.tasksDir = path.join(this.basePath, 'tasks');
 	}
@@ -59,7 +60,7 @@ export class FileStorage extends BaseStorage {
 		let lastModified = '';
 
 		for (const tag of tags) {
-			const filePath = this.getTasksPath(tag === 'default' ? undefined : tag);
+			const filePath = this.getTasksPath(tag); // getTasksPath handles 'master' correctly now
 			try {
 				const stats = await fs.stat(filePath);
 				const data = await this.readJsonFile(filePath);
@@ -77,7 +78,13 @@ export class FileStorage extends BaseStorage {
 		return {
 			totalTasks,
 			totalTags: tags.length,
-			lastModified: lastModified || new Date().toISOString()
+			lastModified: lastModified || new Date().toISOString(),
+			storageSize: 0, // Could calculate actual file sizes if needed
+			tagStats: tags.map(tag => ({
+				tag,
+				taskCount: 0, // Would need to load each tag to get accurate count
+				lastModified: lastModified || new Date().toISOString()
+			}))
 		};
 	}
 
@@ -150,7 +157,7 @@ export class FileStorage extends BaseStorage {
 			for (const file of files) {
 				if (file.endsWith('.json')) {
 					if (file === 'tasks.json') {
-						tags.push('default');
+						tags.push('master'); // Changed from 'default' to 'master'
 					} else if (!file.includes('.backup.')) {
 						// Extract tag name from filename (remove .json extension)
 						tags.push(file.slice(0, -5));
@@ -199,19 +206,107 @@ export class FileStorage extends BaseStorage {
 		await this.writeJsonFile(filePath, data);
 	}
 
+	/**
+	 * Append tasks to existing storage
+	 */
+	async appendTasks(tasks: Task[], tag?: string): Promise<void> {
+		const existingTasks = await this.loadTasks(tag);
+		const allTasks = [...existingTasks, ...tasks];
+		await this.saveTasks(allTasks, tag);
+	}
+
+	/**
+	 * Update a specific task
+	 */
+	async updateTask(taskId: string, updates: Partial<Task>, tag?: string): Promise<void> {
+		const tasks = await this.loadTasks(tag);
+		const taskIndex = tasks.findIndex(t => t.id === taskId);
+		
+		if (taskIndex === -1) {
+			throw new Error(`Task ${taskId} not found`);
+		}
+		
+		tasks[taskIndex] = { ...tasks[taskIndex], ...updates, id: taskId };
+		await this.saveTasks(tasks, tag);
+	}
+
+	/**
+	 * Delete a task
+	 */
+	async deleteTask(taskId: string, tag?: string): Promise<void> {
+		const tasks = await this.loadTasks(tag);
+		const filteredTasks = tasks.filter(t => t.id !== taskId);
+		
+		if (filteredTasks.length === tasks.length) {
+			throw new Error(`Task ${taskId} not found`);
+		}
+		
+		await this.saveTasks(filteredTasks, tag);
+	}
+
+	/**
+	 * Delete a tag
+	 */
+	async deleteTag(tag: string): Promise<void> {
+		const filePath = this.getTasksPath(tag);
+		try {
+			await fs.unlink(filePath);
+		} catch (error: any) {
+			if (error.code !== 'ENOENT') {
+				throw new Error(`Failed to delete tag ${tag}: ${error.message}`);
+			}
+		}
+	}
+
+	/**
+	 * Rename a tag
+	 */
+	async renameTag(oldTag: string, newTag: string): Promise<void> {
+		const oldPath = this.getTasksPath(oldTag);
+		const newPath = this.getTasksPath(newTag);
+		
+		try {
+			await fs.rename(oldPath, newPath);
+		} catch (error: any) {
+			throw new Error(`Failed to rename tag from ${oldTag} to ${newTag}: ${error.message}`);
+		}
+	}
+
+	/**
+	 * Copy a tag
+	 */
+	async copyTag(sourceTag: string, targetTag: string): Promise<void> {
+		const tasks = await this.loadTasks(sourceTag);
+		const metadata = await this.loadMetadata(sourceTag);
+		
+		await this.saveTasks(tasks, targetTag);
+		if (metadata) {
+			await this.saveMetadata(metadata, targetTag);
+		}
+	}
+
 	// ============================================================================
 	// Private Helper Methods
 	// ============================================================================
 
 	/**
+	 * Sanitize tag name for file system
+	 */
+	private sanitizeTag(tag: string): string {
+		// Replace special characters with underscores
+		return tag.replace(/[^a-zA-Z0-9-_]/g, '_');
+	}
+
+	/**
 	 * Get the file path for tasks based on tag
 	 */
 	private getTasksPath(tag?: string): string {
-		if (tag) {
-			const sanitizedTag = this.sanitizeTag(tag);
-			return path.join(this.tasksDir, `${sanitizedTag}.json`);
+		// Handle 'master' as the default tag (maps to tasks.json)
+		if (!tag || tag === 'master') {
+			return path.join(this.tasksDir, 'tasks.json');
 		}
-		return path.join(this.tasksDir, 'tasks.json');
+		const sanitizedTag = this.sanitizeTag(tag);
+		return path.join(this.tasksDir, `${sanitizedTag}.json`);
 	}
 
 	/**
@@ -296,12 +391,26 @@ export class FileStorage extends BaseStorage {
 	}
 
 	/**
+	 * Get backup file path
+	 */
+	private getBackupPath(filePath: string, timestamp: string): string {
+		const dir = path.dirname(filePath);
+		const base = path.basename(filePath, '.json');
+		return path.join(dir, 'backups', `${base}-${timestamp}.json`);
+	}
+
+	/**
 	 * Create a backup of the file
 	 */
 	private async createBackup(filePath: string): Promise<void> {
 		try {
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 			const backupPath = this.getBackupPath(filePath, timestamp);
+			
+			// Ensure backup directory exists
+			const backupDir = path.dirname(backupPath);
+			await fs.mkdir(backupDir, { recursive: true });
+			
 			await fs.copyFile(filePath, backupPath);
 
 			// Clean up old backups if needed

@@ -4,7 +4,6 @@
 
 import {
 	PlaceholderParser,
-	PlaceholderProvider,
 	PlaceholderStorage,
 	StorageError,
 	TaskNotFoundError,
@@ -15,9 +14,9 @@ import {
 	isValidTaskId,
 	name,
 	version
-} from '@/index';
+} from '@tm/core';
 
-import type { PlaceholderTask, TaskId, TaskPriority, TaskStatus } from '@/types/index';
+import type { PlaceholderTask, TaskId, TaskPriority, TaskStatus } from '@tm/core';
 
 describe('tm-core smoke tests', () => {
 	describe('package metadata', () => {
@@ -46,15 +45,6 @@ describe('tm-core smoke tests', () => {
 		});
 	});
 
-	describe('placeholder provider', () => {
-		it('should create and use placeholder provider', async () => {
-			const provider = new PlaceholderProvider();
-			expect(provider.name).toBe('placeholder');
-
-			const response = await provider.generateResponse('test prompt');
-			expect(response).toContain('test prompt');
-		});
-	});
 
 	describe('placeholder storage', () => {
 		it('should perform basic storage operations', async () => {

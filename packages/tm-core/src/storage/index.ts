@@ -3,10 +3,13 @@
  * This file exports all storage-related classes and interfaces
  */
 
-// Storage implementations will be defined here
-// export * from './file-storage.js';
-// export * from './memory-storage.js';
-// export * from './storage-interface.js';
+// Export storage implementations
+export { FileStorage } from './file-storage.js';
+export { ApiStorage, type ApiStorageConfig } from './api-storage.js';
+export { StorageFactory } from './storage-factory.js';
+
+// Export storage interface and types
+export type { IStorage, StorageStats } from '../interfaces/storage.interface.js';
 
 // Placeholder exports - these will be implemented in later tasks
 export interface StorageAdapter {

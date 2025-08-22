@@ -14,15 +14,15 @@ export {
 // Re-export types
 export type * from './types/index';
 
-// Re-export interfaces
+// Re-export interfaces (types only to avoid conflicts)
 export type * from './interfaces/index';
-export * from './interfaces/index';
 
 // Re-export providers
 export * from './providers/index';
 
-// Re-export storage
-export * from './storage/index';
+// Re-export storage (selectively to avoid conflicts)
+export { FileStorage, ApiStorage, StorageFactory, type ApiStorageConfig } from './storage/index';
+export { PlaceholderStorage, type StorageAdapter } from './storage/index';
 
 // Re-export parser
 export * from './parser/index';
@@ -34,7 +34,7 @@ export * from './utils/index';
 export * from './errors/index';
 
 // Re-export entities
-export { TaskEntity } from './core/entities/task.entity.js';
+export { TaskEntity } from './entities/task.entity.js';
 
 // Package metadata
 export const version = '1.0.0';

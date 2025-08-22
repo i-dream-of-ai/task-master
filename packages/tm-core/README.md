@@ -53,8 +53,8 @@ import type { TaskId, TaskStatus } from '@task-master/tm-core/types';
 // Import utilities
 import { generateTaskId, formatDate } from '@task-master/tm-core/utils';
 
-// Import providers
-import { PlaceholderProvider } from '@task-master/tm-core/providers';
+// Import providers (AI providers coming soon)
+// import { AIProvider } from '@task-master/tm-core/providers';
 
 // Import storage
 import { PlaceholderStorage } from '@task-master/tm-core/storage';

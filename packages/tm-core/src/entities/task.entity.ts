@@ -2,8 +2,8 @@
  * @fileoverview Task entity with business rules and domain logic
  */
 
-import { ERROR_CODES, TaskMasterError } from '../../errors/task-master-error.js';
-import type { Subtask, Task, TaskPriority, TaskStatus } from '../../types/index.js';
+import { ERROR_CODES, TaskMasterError } from '../errors/task-master-error.js';
+import type { Subtask, Task, TaskPriority, TaskStatus } from '../types/index.js';
 
 /**
  * Task entity representing a task with business logic
