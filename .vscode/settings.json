@@ -10,5 +10,6 @@
 	},
 
 	"json.format.enable": true,
-	"json.validate.enable": true
+	"json.validate.enable": true,
+	"typescript.tsdk": "node_modules/typescript/lib"
 }

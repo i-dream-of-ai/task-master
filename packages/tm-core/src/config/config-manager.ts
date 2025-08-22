@@ -1,135 +1,134 @@
 /**
  * @fileoverview Configuration Manager
- * Handles loading, caching, and accessing configuration including active tag
+ * Orchestrates configuration services following clean architecture principles
+ *
+ * This ConfigManager delegates responsibilities to specialized services for better
+ * maintainability, testability, and separation of concerns.
  */
 
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
-import type { IConfiguration } from '../interfaces/configuration.interface.js';
-import { ERROR_CODES, TaskMasterError } from '../errors/task-master-error.js';
+import type { PartialConfiguration } from '../interfaces/configuration.interface.js';
+import { ConfigLoader } from './services/config-loader.service.js';
+import {
+	ConfigMerger,
+	CONFIG_PRECEDENCE
+} from './services/config-merger.service.js';
+import { RuntimeStateManager } from './services/runtime-state-manager.service.js';
+import { ConfigPersistence } from './services/config-persistence.service.js';
+import { EnvironmentConfigProvider } from './services/environment-config-provider.service.js';
 
 /**
- * Configuration state including runtime settings
- */
-interface ConfigState {
-	/** The loaded configuration */
-	config: Partial<IConfiguration>;
-	/** Currently active tag (defaults to 'master') */
-	activeTag: string;
-	/** Project root path */
-	projectRoot: string;
-}
-
-/**
- * ConfigManager handles all configuration-related operations
- * Single source of truth for configuration and active context
+ * ConfigManager orchestrates all configuration services
+ *
+ * This class delegates responsibilities to specialized services:
+ * - ConfigLoader: Loads configuration from files
+ * - ConfigMerger: Merges configurations with precedence
+ * - RuntimeStateManager: Manages runtime state
+ * - ConfigPersistence: Handles file persistence
+ * - EnvironmentConfigProvider: Extracts env var configuration
  */
 export class ConfigManager {
-	private state: ConfigState;
-	private configPath: string;
+	private projectRoot: string;
+	private config: PartialConfiguration = {};
 	private initialized = false;
 
-	constructor(projectRoot: string) {
-		this.state = {
-			config: {},
-			activeTag: 'master',
-			projectRoot
-		};
-		this.configPath = path.join(projectRoot, '.taskmaster', 'config.json');
+	// Services
+	private loader: ConfigLoader;
+	private merger: ConfigMerger;
+	private stateManager: RuntimeStateManager;
+	private persistence: ConfigPersistence;
+	private envProvider: EnvironmentConfigProvider;
+
+	/**
+	 * Create and initialize a new ConfigManager instance
+	 * This is the ONLY way to create a ConfigManager
+	 * 
+	 * @param projectRoot - The root directory of the project
+	 * @returns Fully initialized ConfigManager instance
+	 */
+	static async create(projectRoot: string): Promise<ConfigManager> {
+		const manager = new ConfigManager(projectRoot);
+		await manager.initialize();
+		return manager;
 	}
 
 	/**
-	 * Initialize by loading configuration from disk
+	 * Private constructor - use ConfigManager.create() instead
+	 * This ensures the ConfigManager is always properly initialized
 	 */
-	async initialize(): Promise<void> {
+	private constructor(projectRoot: string) {
+		this.projectRoot = projectRoot;
+
+		// Initialize services
+		this.loader = new ConfigLoader(projectRoot);
+		this.merger = new ConfigMerger();
+		this.stateManager = new RuntimeStateManager(projectRoot);
+		this.persistence = new ConfigPersistence(projectRoot);
+		this.envProvider = new EnvironmentConfigProvider();
+	}
+
+	/**
+	 * Initialize by loading configuration from all sources
+	 * Private - only called by the factory method
+	 */
+	private async initialize(): Promise<void> {
 		if (this.initialized) return;
 
-		try {
-			await this.loadConfig();
-			this.initialized = true;
-		} catch (error) {
-			// If config doesn't exist, use defaults
-			console.debug('No config.json found, using defaults');
-			this.initialized = true;
+		// Clear any existing configuration sources
+		this.merger.clearSources();
+
+		// 1. Load default configuration (lowest precedence)
+		this.merger.addSource({
+			name: 'defaults',
+			config: this.loader.getDefaultConfig(),
+			precedence: CONFIG_PRECEDENCE.DEFAULTS
+		});
+
+		// 2. Load global configuration (if exists)
+		const globalConfig = await this.loader.loadGlobalConfig();
+		if (globalConfig) {
+			this.merger.addSource({
+				name: 'global',
+				config: globalConfig,
+				precedence: CONFIG_PRECEDENCE.GLOBAL
+			});
 		}
-	}
 
-	/**
-	 * Load configuration from config.json
-	 */
-	private async loadConfig(): Promise<void> {
-		try {
-			const configData = await fs.readFile(this.configPath, 'utf-8');
-			const config = JSON.parse(configData);
-
-			this.state.config = config;
-
-			// Load active tag from config if present
-			if (config.activeTag) {
-				this.state.activeTag = config.activeTag;
-			}
-
-			// Check for environment variable override
-			if (process.env.TASKMASTER_TAG) {
-				this.state.activeTag = process.env.TASKMASTER_TAG;
-			}
-		} catch (error: any) {
-			if (error.code !== 'ENOENT') {
-				throw new TaskMasterError(
-					'Failed to load configuration',
-					ERROR_CODES.CONFIG_ERROR,
-					{ configPath: this.configPath },
-					error
-				);
-			}
-			// File doesn't exist, will use defaults
+		// 3. Load local project configuration
+		const localConfig = await this.loader.loadLocalConfig();
+		if (localConfig) {
+			this.merger.addSource({
+				name: 'local',
+				config: localConfig,
+				precedence: CONFIG_PRECEDENCE.LOCAL
+			});
 		}
-	}
 
-	/**
-	 * Save current configuration to disk
-	 */
-	async saveConfig(): Promise<void> {
-		const configDir = path.dirname(this.configPath);
-
-		try {
-			// Ensure directory exists
-			await fs.mkdir(configDir, { recursive: true });
-
-			// Save config with active tag
-			const configToSave = {
-				...this.state.config,
-				activeTag: this.state.activeTag
-			};
-
-			await fs.writeFile(
-				this.configPath,
-				JSON.stringify(configToSave, null, 2),
-				'utf-8'
-			);
-		} catch (error) {
-			throw new TaskMasterError(
-				'Failed to save configuration',
-				ERROR_CODES.CONFIG_ERROR,
-				{ configPath: this.configPath },
-				error as Error
-			);
+		// 4. Load environment variables (highest precedence)
+		const envConfig = this.envProvider.loadConfig();
+		if (Object.keys(envConfig).length > 0) {
+			this.merger.addSource({
+				name: 'environment',
+				config: envConfig,
+				precedence: CONFIG_PRECEDENCE.ENVIRONMENT
+			});
 		}
+
+		// 5. Merge all configurations
+		this.config = this.merger.merge();
+
+		// 6. Load runtime state
+		await this.stateManager.loadState();
+
+		this.initialized = true;
 	}
 
-	/**
-	 * Get the currently active tag
-	 */
-	getActiveTag(): string {
-		return this.state.activeTag;
-	}
+	// ==================== Configuration Access ====================
 
 	/**
-	 * Set the active tag
+	 * Get full configuration
 	 */
-	async setActiveTag(tag: string): Promise<void> {
-		this.state.activeTag = tag;
-		await this.saveConfig();
+	getConfig(): PartialConfiguration {
+		return this.config;
 	}
 
 	/**
@@ -140,9 +139,8 @@ export class ConfigManager {
 		apiEndpoint?: string;
 		apiAccessToken?: string;
 	} {
-		const storage = this.state.config.storage;
+		const storage = this.config.storage;
 
-		// Check for Hamster/API configuration
 		if (
 			storage?.type === 'api' &&
 			storage.apiEndpoint &&
@@ -155,51 +153,128 @@ export class ConfigManager {
 			};
 		}
 
-		// Default to file storage
 		return { type: 'file' };
+	}
+
+	/**
+	 * Get model configuration
+	 */
+	getModelConfig() {
+		return (
+			this.config.models || {
+				main: 'claude-3-5-sonnet-20241022',
+				fallback: 'gpt-4o-mini'
+			}
+		);
+	}
+
+	/**
+	 * Get response language setting
+	 */
+	getResponseLanguage(): string {
+		const customConfig = this.config.custom as any;
+		return customConfig?.responseLanguage || 'English';
 	}
 
 	/**
 	 * Get project root path
 	 */
 	getProjectRoot(): string {
-		return this.state.projectRoot;
+		return this.projectRoot;
 	}
 
 	/**
-	 * Get full configuration
-	 */
-	getConfig(): Partial<IConfiguration> {
-		return this.state.config;
-	}
-
-	/**
-	 * Update configuration
-	 */
-	async updateConfig(updates: Partial<IConfiguration>): Promise<void> {
-		this.state.config = {
-			...this.state.config,
-			...updates
-		};
-		await this.saveConfig();
-	}
-
-	/**
-	 * Check if using API storage (Hamster)
+	 * Check if using API storage
 	 */
 	isUsingApiStorage(): boolean {
 		return this.getStorageConfig().type === 'api';
 	}
 
+	// ==================== Runtime State ====================
+
 	/**
-	 * Get model configuration for AI providers
+	 * Get the currently active tag
 	 */
-	getModelConfig() {
-		return (
-			this.state.config.models || {
-				main: 'claude-3-5-sonnet-20241022',
-				fallback: 'gpt-4o-mini'
-			}
-		);
+	getActiveTag(): string {
+		return this.stateManager.getActiveTag();
+	}
+
+	/**
+	 * Set the active tag
+	 */
+	async setActiveTag(tag: string): Promise<void> {
+		await this.stateManager.setActiveTag(tag);
+	}
+
+	// ==================== Configuration Updates ====================
+
+	/**
+	 * Update configuration
+	 */
+	async updateConfig(updates: PartialConfiguration): Promise<void> {
+		// Merge updates into current config
+		Object.assign(this.config, updates);
+
+		// Save to persistence
+		await this.persistence.saveConfig(this.config);
+
+		// Re-initialize to respect precedence
+		await this.initialize();
+	}
+
+	/**
+	 * Set response language
+	 */
+	async setResponseLanguage(language: string): Promise<void> {
+		if (!this.config.custom) {
+			this.config.custom = {};
+		}
+		(this.config.custom as any).responseLanguage = language;
+		await this.persistence.saveConfig(this.config);
+	}
+
+	/**
+	 * Save current configuration
+	 */
+	async saveConfig(): Promise<void> {
+		await this.persistence.saveConfig(this.config, {
+			createBackup: true,
+			atomic: true
+		});
+	}
+
+	// ==================== Utilities ====================
+
+	/**
+	 * Reset configuration to defaults
+	 */
+	async reset(): Promise<void> {
+		// Clear configuration file
+		await this.persistence.deleteConfig();
+
+		// Clear runtime state
+		await this.stateManager.clearState();
+
+		// Reset internal state
+		this.initialized = false;
+		this.config = {};
+
+		// Re-initialize with defaults
+		await this.initialize();
+	}
+
+	/**
+	 * Get configuration sources for debugging
+	 */
+	getConfigSources() {
+		return this.merger.getSources();
+	}
+
+	/**
+	 * Watch for configuration changes (placeholder for future)
+	 */
+	watch(_callback: (config: PartialConfiguration) => void): () => void {
+		console.warn('Configuration watching not yet implemented');
+		return () => {}; // Return no-op unsubscribe function
 	}
 }

@@ -1,5 +1,5 @@
 /**
- * File-based storage implementation for Task Master
+ * @fileoverview File-based storage implementation for Task Master
  */
 
 import { promises as fs } from 'node:fs';
@@ -96,10 +96,19 @@ export class FileStorage implements IStorage {
 	 */
 	async loadTasks(tag?: string): Promise<Task[]> {
 		const filePath = this.getTasksPath(tag);
+		const resolvedTag = tag || 'master';
 
 		try {
-			const data = await this.readJsonFile(filePath);
-			return data?.tasks || [];
+			const rawData = await this.readJsonFile(filePath);
+
+			// Handle legacy format where tasks are wrapped in a tag key
+			if (rawData && typeof rawData === 'object' && resolvedTag in rawData) {
+				const tagData = (rawData as any)[resolvedTag];
+				return tagData?.tasks || [];
+			}
+
+			// Handle standard format
+			return rawData?.tasks || [];
 		} catch (error: any) {
 			if (error.code === 'ENOENT') {
 				return []; // File doesn't exist, return empty array
@@ -113,24 +122,63 @@ export class FileStorage implements IStorage {
 	 */
 	async saveTasks(tasks: Task[], tag?: string): Promise<void> {
 		const filePath = this.getTasksPath(tag);
+		const resolvedTag = tag || 'master';
 
 		// Ensure directory exists
 		await this.ensureDirectoryExists();
 
-		// Create data structure with metadata
-		const data: FileStorageData = {
-			tasks,
-			metadata: {
-				version: '1.0.0',
-				lastModified: new Date().toISOString(),
-				taskCount: tasks.length,
-				completedCount: tasks.filter((t) => t.status === 'done').length,
-				tags: tag ? [tag] : []
+		// Check if we need to use legacy format
+		let dataToWrite: any;
+
+		try {
+			const existingData = await this.readJsonFile(filePath);
+			// If existing file uses legacy format, maintain it
+			if (
+				existingData &&
+				typeof existingData === 'object' &&
+				resolvedTag in existingData
+			) {
+				dataToWrite = {
+					[resolvedTag]: {
+						tasks,
+						metadata: {
+							version: '1.0.0',
+							lastModified: new Date().toISOString(),
+							taskCount: tasks.length,
+							completedCount: tasks.filter((t) => t.status === 'done').length,
+							tags: [resolvedTag]
+						}
+					}
+				};
+			} else {
+				// Use standard format for new files
+				dataToWrite = {
+					tasks,
+					metadata: {
+						version: '1.0.0',
+						lastModified: new Date().toISOString(),
+						taskCount: tasks.length,
+						completedCount: tasks.filter((t) => t.status === 'done').length,
+						tags: tag ? [tag] : []
+					}
+				};
 			}
-		};
+		} catch (error: any) {
+			// File doesn't exist, use standard format
+			dataToWrite = {
+				tasks,
+				metadata: {
+					version: '1.0.0',
+					lastModified: new Date().toISOString(),
+					taskCount: tasks.length,
+					completedCount: tasks.filter((t) => t.status === 'done').length,
+					tags: tag ? [tag] : []
+				}
+			};
+		}
 
 		// Write with file locking
-		await this.writeJsonFile(filePath, data);
+		await this.writeJsonFile(filePath, dataToWrite);
 	}
 
 	/**
@@ -182,10 +230,31 @@ export class FileStorage implements IStorage {
 	 */
 	async loadMetadata(tag?: string): Promise<TaskMetadata | null> {
 		const filePath = this.getTasksPath(tag);
+		const resolvedTag = tag || 'master';
 
 		try {
-			const data = await this.readJsonFile(filePath);
-			return data?.metadata || null;
+			const rawData = await this.readJsonFile(filePath);
+
+			// Handle legacy format where data is wrapped in a tag key
+			if (rawData && typeof rawData === 'object' && resolvedTag in rawData) {
+				const tagData = (rawData as any)[resolvedTag];
+				// Generate metadata if not present in legacy format
+				if (!tagData?.metadata && tagData?.tasks) {
+					return {
+						version: '1.0.0',
+						lastModified: new Date().toISOString(),
+						taskCount: tagData.tasks.length,
+						completedCount: tagData.tasks.filter(
+							(t: any) => t.status === 'done'
+						).length,
+						tags: [resolvedTag]
+					};
+				}
+				return tagData?.metadata || null;
+			}
+
+			// Handle standard format
+			return rawData?.metadata || null;
 		} catch (error: any) {
 			if (error.code === 'ENOENT') {
 				return null;
@@ -227,13 +296,17 @@ export class FileStorage implements IStorage {
 		tag?: string
 	): Promise<void> {
 		const tasks = await this.loadTasks(tag);
-		const taskIndex = tasks.findIndex((t) => t.id === taskId);
+		const taskIndex = tasks.findIndex((t) => t.id === taskId.toString());
 
 		if (taskIndex === -1) {
 			throw new Error(`Task ${taskId} not found`);
 		}
 
-		tasks[taskIndex] = { ...tasks[taskIndex], ...updates, id: taskId };
+		tasks[taskIndex] = {
+			...tasks[taskIndex],
+			...updates,
+			id: taskId.toString()
+		};
 		await this.saveTasks(tasks, tag);
 	}
 
@@ -354,7 +427,7 @@ export class FileStorage implements IStorage {
 	 */
 	private async writeJsonFile(
 		filePath: string,
-		data: FileStorageData
+		data: FileStorageData | any
 	): Promise<void> {
 		// Use file locking to prevent concurrent writes
 		const lockKey = filePath;
@@ -379,7 +452,7 @@ export class FileStorage implements IStorage {
 	 */
 	private async performWrite(
 		filePath: string,
-		data: FileStorageData
+		data: FileStorageData | any
 	): Promise<void> {
 		const tempPath = `${filePath}.tmp`;
 
